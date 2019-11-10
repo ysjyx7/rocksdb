@@ -13,6 +13,7 @@
 #include <alloca.h>
 #endif
 
+#include <iostream>
 #include <algorithm>
 #include <cinttypes>
 #include <cstdio>
@@ -98,6 +99,7 @@
 #include "util/mutexlock.h"
 #include "util/stop_watch.h"
 #include "util/string_util.h"
+
 
 namespace rocksdb {
 const std::string kDefaultColumnFamilyName("default");
@@ -604,6 +606,10 @@ Status DBImpl::CloseHelper() {
 Status DBImpl::CloseImpl() { return CloseHelper(); }
 
 DBImpl::~DBImpl() {
+  // printf("seek time: %s",stats_->getHistogramString(DB_SEEK).c_str());
+  // printf("next time: %s",stats_->getHistogramString(DB_NEXT).c_str());
+  // fprintf(stderr,"seek time: %s",stats_->getHistogramString(DB_SEEK).c_str());
+  // fprintf(stderr,"next time: %s",stats_->getHistogramString(DB_NEXT).c_str());
   if (!closed_) {
     closed_ = true;
     CloseHelper();
@@ -2559,17 +2565,21 @@ bool DBImpl::GetProperty(ColumnFamilyHandle* column_family,
     if (ret_value) {
       *value = ToString(int_value);
     }
+    *value += std::string("seek time ")+stats_->getHistogramString(DB_SEEK).c_str()+"next time "+stats_->getHistogramString(DB_NEXT).c_str()+"\n";
     return ret_value;
   } else if (property_info->handle_string) {
     InstrumentedMutexLock l(&mutex_);
-    return cfd->internal_stats()->GetStringProperty(*property_info, property,
+    bool ret = cfd->internal_stats()->GetStringProperty(*property_info, property,
                                                     value);
+    *value += std::string("seek time ")+stats_->getHistogramString(DB_SEEK).c_str()+"next time "+stats_->getHistogramString(DB_NEXT).c_str()+"\n";
+    return ret;
   } else if (property_info->handle_string_dbimpl) {
     std::string tmp_value;
     bool ret_value = (this->*(property_info->handle_string_dbimpl))(&tmp_value);
     if (ret_value) {
       *value = tmp_value;
     }
+    *value += std::string("seek time ")+stats_->getHistogramString(DB_SEEK).c_str()+"next time "+stats_->getHistogramString(DB_NEXT).c_str()+"\n";
     return ret_value;
   }
   // Shouldn't reach here since exactly one of handle_string and handle_int
@@ -3152,7 +3162,8 @@ Status DB::DestroyColumnFamilyHandle(ColumnFamilyHandle* column_family) {
   return Status::OK();
 }
 
-DB::~DB() {}
+DB::~DB() {
+}
 
 Status DBImpl::Close() {
   if (!closed_) {

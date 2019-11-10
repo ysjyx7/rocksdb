@@ -84,7 +84,7 @@ struct TableBuilderOptions {
       const std::string& _column_family_name, int _level,
       const uint64_t _creation_time = 0, const int64_t _oldest_key_time = 0,
       const uint64_t _target_file_size = 0,
-      const uint64_t _file_creation_time = 0)
+      const uint64_t _file_creation_time = 0, int _start_level = -1)
       : ioptions(_ioptions),
         moptions(_moptions),
         internal_comparator(_internal_comparator),
@@ -98,7 +98,8 @@ struct TableBuilderOptions {
         creation_time(_creation_time),
         oldest_key_time(_oldest_key_time),
         target_file_size(_target_file_size),
-        file_creation_time(_file_creation_time) {}
+        file_creation_time(_file_creation_time),
+        start_level(_start_level) {}
   const ImmutableCFOptions& ioptions;
   const MutableCFOptions& moptions;
   const InternalKeyComparator& internal_comparator;
@@ -114,6 +115,7 @@ struct TableBuilderOptions {
   const int64_t oldest_key_time;
   const uint64_t target_file_size;
   const uint64_t file_creation_time;
+  int start_level;
 };
 
 // TableBuilder provides the interface used to build a Table

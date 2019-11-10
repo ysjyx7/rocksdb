@@ -5024,6 +5024,8 @@ class HistogramTypeJni {
         return 0x2D;
       case rocksdb::Histograms::BLOB_DB_DECOMPRESSION_MICROS:
         return 0x2E;
+      case rocksdb::Histograms::DB_NEXT:
+        return 0x2F;
       case rocksdb::Histograms::HISTOGRAM_ENUM_MAX:
         // 0x1F for backwards compatibility on current minor version.
         return 0x1F;
@@ -5131,6 +5133,8 @@ class HistogramTypeJni {
         return rocksdb::Histograms::BLOB_DB_COMPRESSION_MICROS;
       case 0x2E:
         return rocksdb::Histograms::BLOB_DB_DECOMPRESSION_MICROS;
+      case 0x2F:
+        return rocksdb::Histograms::DB_NEXT;
       case 0x1F:
         // 0x1F for backwards compatibility on current minor version.
         return rocksdb::Histograms::HISTOGRAM_ENUM_MAX;

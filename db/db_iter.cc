@@ -374,6 +374,7 @@ void DBIter::Next() {
 
   PERF_CPU_TIMER_GUARD(iter_next_cpu_nanos, env_);
   // Release temporarily pinned blocks from last operation
+  StopWatch sw(env_, statistics_, DB_NEXT);
   ReleaseTempPinnedData();
   local_stats_.skip_count_ += num_internal_keys_skipped_;
   local_stats_.skip_count_--;

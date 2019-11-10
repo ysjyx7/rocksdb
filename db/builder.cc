@@ -50,7 +50,7 @@ TableBuilder* NewTableBuilder(
     uint64_t sample_for_compression, const CompressionOptions& compression_opts,
     int level, const bool skip_filters, const uint64_t creation_time,
     const uint64_t oldest_key_time, const uint64_t target_file_size,
-    const uint64_t file_creation_time) {
+    const uint64_t file_creation_time, int start_level) {
   assert((column_family_id ==
           TablePropertiesCollectorFactory::Context::kUnknownColumnFamily) ==
          column_family_name.empty());
@@ -60,7 +60,7 @@ TableBuilder* NewTableBuilder(
                           sample_for_compression, compression_opts,
                           skip_filters, column_family_name, level,
                           creation_time, oldest_key_time, target_file_size,
-                          file_creation_time),
+                          file_creation_time, start_level),
       column_family_id, file);
 }
 
