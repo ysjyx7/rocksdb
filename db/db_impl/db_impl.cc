@@ -100,6 +100,9 @@
 #include "util/stop_watch.h"
 #include "util/string_util.h"
 
+std::atomic<uint64_t> seek_time{0};
+std::atomic<uint64_t> next_time{0};
+
 
 namespace rocksdb {
 const std::string kDefaultColumnFamilyName("default");
@@ -610,6 +613,7 @@ DBImpl::~DBImpl() {
   // printf("next time: %s",stats_->getHistogramString(DB_NEXT).c_str());
   // fprintf(stderr,"seek time: %s",stats_->getHistogramString(DB_SEEK).c_str());
   // fprintf(stderr,"next time: %s",stats_->getHistogramString(DB_NEXT).c_str());
+  printf("atomic seek %lu, atomic next %lu\n",seek_time.load(), next_time.load());
   if (!closed_) {
     closed_ = true;
     CloseHelper();
@@ -2565,21 +2569,17 @@ bool DBImpl::GetProperty(ColumnFamilyHandle* column_family,
     if (ret_value) {
       *value = ToString(int_value);
     }
-    *value += std::string("seek time ")+stats_->getHistogramString(DB_SEEK).c_str()+"next time "+stats_->getHistogramString(DB_NEXT).c_str()+"\n";
     return ret_value;
   } else if (property_info->handle_string) {
     InstrumentedMutexLock l(&mutex_);
-    bool ret = cfd->internal_stats()->GetStringProperty(*property_info, property,
+    return cfd->internal_stats()->GetStringProperty(*property_info, property,
                                                     value);
-    *value += std::string("seek time ")+stats_->getHistogramString(DB_SEEK).c_str()+"next time "+stats_->getHistogramString(DB_NEXT).c_str()+"\n";
-    return ret;
   } else if (property_info->handle_string_dbimpl) {
     std::string tmp_value;
     bool ret_value = (this->*(property_info->handle_string_dbimpl))(&tmp_value);
     if (ret_value) {
       *value = tmp_value;
     }
-    *value += std::string("seek time ")+stats_->getHistogramString(DB_SEEK).c_str()+"next time "+stats_->getHistogramString(DB_NEXT).c_str()+"\n";
     return ret_value;
   }
   // Shouldn't reach here since exactly one of handle_string and handle_int

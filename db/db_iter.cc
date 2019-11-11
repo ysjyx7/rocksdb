@@ -31,6 +31,9 @@
 #include "util/string_util.h"
 #include "util/user_comparator_wrapper.h"
 
+extern std::atomic<uint64_t> seek_time;
+extern std::atomic<uint64_t> next_time;
+
 namespace rocksdb {
 
 #if 0
@@ -375,6 +378,7 @@ void DBIter::Next() {
   PERF_CPU_TIMER_GUARD(iter_next_cpu_nanos, env_);
   // Release temporarily pinned blocks from last operation
   StopWatch sw(env_, statistics_, DB_NEXT);
+  uint64_t start = env_->NowMicros();
   ReleaseTempPinnedData();
   local_stats_.skip_count_ += num_internal_keys_skipped_;
   local_stats_.skip_count_--;
@@ -408,6 +412,7 @@ void DBIter::Next() {
     local_stats_.next_found_count_++;
     local_stats_.bytes_read_ += (key().size() + value().size());
   }
+  next_time += env_->NowMicros() - start;
 }
 
 // PRE: saved_key_ has the current user key if skipping
@@ -1296,6 +1301,7 @@ bool DBIter::IsVisible(SequenceNumber sequence) {
 void DBIter::Seek(const Slice& target) {
   PERF_CPU_TIMER_GUARD(iter_seek_cpu_nanos, env_);
   StopWatch sw(env_, statistics_, DB_SEEK);
+  uint64_t start = env_->NowMicros();
   status_ = Status::OK();
   ReleaseTempPinnedData();
   ResetInternalKeysSkippedCounter();
@@ -1350,6 +1356,7 @@ void DBIter::Seek(const Slice& target) {
     prefix_start_buf_.SetUserKey(prefix_start_key_);
     prefix_start_key_ = prefix_start_buf_.GetUserKey();
   }
+  seek_time += env_->NowMicros() -start;
 }
 
 void DBIter::SeekForPrev(const Slice& target) {
