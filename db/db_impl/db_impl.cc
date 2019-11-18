@@ -102,6 +102,7 @@
 
 std::atomic<uint64_t> seek_time{0};
 std::atomic<uint64_t> next_time{0};
+std::atomic<uint64_t> init_iter_block{0};
 
 
 namespace rocksdb {
@@ -613,7 +614,6 @@ DBImpl::~DBImpl() {
   // printf("next time: %s",stats_->getHistogramString(DB_NEXT).c_str());
   // fprintf(stderr,"seek time: %s",stats_->getHistogramString(DB_SEEK).c_str());
   // fprintf(stderr,"next time: %s",stats_->getHistogramString(DB_NEXT).c_str());
-  printf("atomic seek %lu, atomic next %lu\n",seek_time.load(), next_time.load());
   if (!closed_) {
     closed_ = true;
     CloseHelper();
@@ -2557,6 +2557,7 @@ DBOptions DBImpl::GetDBOptions() const {
 
 bool DBImpl::GetProperty(ColumnFamilyHandle* column_family,
                          const Slice& property, std::string* value) {
+  printf("atomic seek %lu, atomic next %lu, init block %lu\n",seek_time.load(), next_time.load(), init_iter_block.load());
   const DBPropertyInfo* property_info = GetPropertyInfo(property);
   value->clear();
   auto cfd = reinterpret_cast<ColumnFamilyHandleImpl*>(column_family)->cfd();

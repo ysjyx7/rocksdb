@@ -14,6 +14,10 @@
 #include "rocksdb/table.h"
 #include "table/block_based/block.h"
 #include "table/format.h"
+#include "atomic"
+
+extern std::atomic<uint64_t> init_iter_block;
+rocksdb::Env* env_{rocksdb::Env::Default()};
 
 namespace rocksdb {
 
@@ -183,6 +187,7 @@ void TwoLevelIndexIterator::SetSecondLevelIterator(
 }
 
 void TwoLevelIndexIterator::InitDataBlock() {
+  uint64_t start = env_->NowMicros();
   if (!first_level_iter_.Valid()) {
     SetSecondLevelIterator(nullptr);
   } else {
@@ -199,6 +204,7 @@ void TwoLevelIndexIterator::InitDataBlock() {
       SetSecondLevelIterator(iter);
     }
   }
+  init_iter_block += env_->NowMicros() - start;
 }
 
 }  // namespace
