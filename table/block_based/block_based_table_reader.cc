@@ -53,6 +53,12 @@
 #include "util/stop_watch.h"
 #include "util/string_util.h"
 #include "util/xxhash.h"
+#include "iostream"
+
+extern std::atomic<uint64_t> block_iter_seek_time;
+extern std::atomic<uint64_t> block_iter_next_time;
+extern std::atomic<uint64_t> block_iter_init_time;
+extern rocksdb::Env* env_;
 
 namespace rocksdb {
 
@@ -2658,7 +2664,9 @@ bool BlockBasedTable::PrefixMayMatch(
 
 template <class TBlockIter, typename TValue>
 void BlockBasedTableIterator<TBlockIter, TValue>::Seek(const Slice& target) {
+  uint64_t start = env_->NowMicros();
   SeekImpl(&target);
+  block_iter_seek_time += env_->NowMicros() - start;
 }
 
 template <class TBlockIter, typename TValue>
@@ -2818,13 +2826,16 @@ void BlockBasedTableIterator<TBlockIter, TValue>::SeekToLast() {
 
 template <class TBlockIter, typename TValue>
 void BlockBasedTableIterator<TBlockIter, TValue>::Next() {
+  uint64_t start = env_->NowMicros();
   if (is_at_first_key_from_index_ && !MaterializeCurrentBlock()) {
+    block_iter_next_time += env_->NowMicros() - start;
     return;
   }
   assert(block_iter_points_to_real_block_);
   block_iter_.Next();
   FindKeyForward();
   CheckOutOfBound();
+  block_iter_next_time += env_->NowMicros() - start;
 }
 
 template <class TBlockIter, typename TValue>
@@ -2868,6 +2879,7 @@ const size_t
 
 template <class TBlockIter, typename TValue>
 void BlockBasedTableIterator<TBlockIter, TValue>::InitDataBlock() {
+  uint64_t start = env_->NowMicros();
   BlockHandle data_block_handle = index_iter_->value().handle;
   if (!block_iter_points_to_real_block_ ||
       data_block_handle.offset() != prev_block_offset_ ||
@@ -2935,6 +2947,7 @@ void BlockBasedTableIterator<TBlockIter, TValue>::InitDataBlock() {
     block_iter_points_to_real_block_ = true;
     CheckDataBlockWithinUpperBound();
   }
+  block_iter_init_time += env_->NowMicros() - start;
 }
 
 template <class TBlockIter, typename TValue>

@@ -15,6 +15,7 @@
 #include "table/block_based/block.h"
 #include "table/format.h"
 #include "atomic"
+#include "iostream"
 
 extern std::atomic<uint64_t> init_iter_block;
 rocksdb::Env* env_{rocksdb::Env::Default()};
