@@ -3104,6 +3104,7 @@ void VersionStorageInfo::CalculateBaseBytes(const ImmutableCFOptions& ioptions,
     uint64_t max_level_size = 0;
 
     int first_non_empty_level = -1;
+    // int first_non_empty_level = options.base_level_for_dynamic_level_bytes;
     // Find size of non-L0 level of most data.
     // Cannot use the size of the last level because it can be empty or less
     // than previous levels after compaction.
@@ -3116,9 +3117,11 @@ void VersionStorageInfo::CalculateBaseBytes(const ImmutableCFOptions& ioptions,
         first_non_empty_level = i;
       }
       if (total_size > max_level_size) {
-        max_level_size = total_size;
+        max_level_size = std::max(total_size, options.max_file_size[2]);
       }
     }
+
+
 
     // Prefill every level's max bytes to disallow compaction from there.
     for (int i = 0; i < num_levels_; i++) {
@@ -3128,7 +3131,8 @@ void VersionStorageInfo::CalculateBaseBytes(const ImmutableCFOptions& ioptions,
     if (max_level_size == 0) {
       // No data for L1 and up. L0 compacts to last level directly.
       // No compaction from L1+ needs to be scheduled.
-      base_level_ = num_levels_ - 1;
+      // base_level_ = num_levels_ - 1;
+      base_level_ = options.base_level_for_dynamic_level_bytes==-1?(num_levels_-1):options.base_level_for_dynamic_level_bytes;
     } else {
       uint64_t l0_size = 0;
       for (const auto& f : files_[0]) {

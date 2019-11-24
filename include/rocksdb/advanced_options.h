@@ -483,6 +483,8 @@ struct AdvancedColumnFamilyOptions {
   // Default: false
   bool level_compaction_dynamic_level_bytes = false;
 
+  int base_level_for_dynamic_level_bytes = -1;
+
   // Default: 10.
   //
   // Dynamically changeable through SetOptions() API

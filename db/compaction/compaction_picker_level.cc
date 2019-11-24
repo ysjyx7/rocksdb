@@ -228,6 +228,7 @@ void LevelCompactionBuilder::SetupInitialFiles() {
           // In these cases, to reduce L0 file count and thus reduce likelihood
           // of write stalls, we can attempt compacting a span of files within
           // L0.
+          // MARK:wujiayu
           if (PickIntraL0Compaction()) {
             output_level_ = 0;
             compaction_reason_ = CompactionReason::kLevelL0FilesNum;

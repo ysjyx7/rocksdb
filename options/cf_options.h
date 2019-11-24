@@ -122,6 +122,8 @@ struct ImmutableCFOptions {
   std::vector<DbPath> cf_paths;
 
   std::shared_ptr<ConcurrentTaskLimiter> compaction_thread_limiter;
+
+  int base_level_for_dynamic_level_bytes;
 };
 
 struct MutableCFOptions {
@@ -162,7 +164,8 @@ struct MutableCFOptions {
         paranoid_file_checks(options.paranoid_file_checks),
         report_bg_io_stats(options.report_bg_io_stats),
         compression(options.compression),
-        sample_for_compression(options.sample_for_compression) {
+        sample_for_compression(options.sample_for_compression),
+        base_level_for_dynamic_level_bytes(options.base_level_for_dynamic_level_bytes) {
     RefreshDerivedOptions(options.num_levels, options.compaction_style);
   }
 
@@ -195,7 +198,7 @@ struct MutableCFOptions {
         paranoid_file_checks(false),
         report_bg_io_stats(false),
         compression(Snappy_Supported() ? kSnappyCompression : kNoCompression),
-        sample_for_compression(0) {}
+        sample_for_compression(0),base_level_for_dynamic_level_bytes(-1) {}
 
   explicit MutableCFOptions(const Options& options);
 
@@ -256,6 +259,8 @@ struct MutableCFOptions {
   // Derived options
   // Per-level target file size.
   std::vector<uint64_t> max_file_size;
+
+  int base_level_for_dynamic_level_bytes;
 };
 
 uint64_t MultiplyCheckOverflow(uint64_t op1, double op2);
