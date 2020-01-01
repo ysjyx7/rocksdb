@@ -124,6 +124,7 @@ struct ImmutableCFOptions {
   std::shared_ptr<ConcurrentTaskLimiter> compaction_thread_limiter;
 
   int base_level_for_dynamic_level_bytes;
+  bool intra_compact_small_l0;
 };
 
 struct MutableCFOptions {

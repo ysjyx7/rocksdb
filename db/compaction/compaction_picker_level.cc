@@ -10,6 +10,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <iostream>
 
 #include "db/compaction/compaction_picker_level.h"
 #include "logging/log_buffer.h"
@@ -119,6 +120,9 @@ class LevelCompactionBuilder {
                             int level);
 
   static const int kMinFilesForIntraL0Compaction = 4;
+
+  uint64_t input_size_{0};
+  uint64_t output_size_{0};
 };
 
 void LevelCompactionBuilder::PickExpiredTtlFiles() {
@@ -209,6 +213,39 @@ void LevelCompactionBuilder::SetupInitialFiles() {
       if (PickFileToCompact()) {
         // found the compaction!
         if (start_level_ == 0) {
+          // wujiayu
+          if(ioptions_.intra_compact_small_l0){
+            // // std::cerr<<"start intra"<<"\n";
+            input_size_ = 0;
+            for(auto& f:start_level_inputs_.files){
+              input_size_ += f->compensated_file_size;
+            }
+            // std::cerr<<"size "<<input_size_<<"and "<<output_size_<<"\n";
+            if(output_size_/input_size_>10){
+              // std::cerr<<"start level"<<"\n";
+              // intra compaction
+              start_level_inputs_.clear();
+              output_level_inputs_.clear();
+              skipped_l0_to_base = true;
+              // std::cerr<<"pick"<<"\n";
+              if (PickIntraL0Compaction()) {
+                // std::cerr<<"pick done"<<"\n";
+                output_level_ = 0;
+                compaction_reason_ = CompactionReason::kLevelL0FilesNum;
+                
+                // std::cerr<<"compact size:";
+                // for(auto& f:start_level_inputs_.files){
+                  // std::cerr<<f->compensated_file_size<<" ";
+                // }
+                // std::cerr<<"\n";
+
+                break;
+              }
+              // std::cerr<<"pick false"<<"\n";
+              skipped_l0_to_base = false;
+              continue;
+            }
+          }
           // L0 score = `num L0 files` / `level0_file_num_compaction_trigger`
           compaction_reason_ = CompactionReason::kLevelL0FilesNum;
         } else {
@@ -467,6 +504,8 @@ bool LevelCompactionBuilder::PickFileToCompact() {
 
   assert(start_level_ >= 0);
 
+  output_size_ = 0;
+
   // Pick the largest file in this level that is not already
   // being compacted
   const std::vector<int>& file_size =
@@ -488,6 +527,7 @@ bool LevelCompactionBuilder::PickFileToCompact() {
 
     start_level_inputs_.files.push_back(f);
     start_level_inputs_.level = start_level_;
+    input_size_+=f->compensated_file_size;
     if (!compaction_picker_->ExpandInputsToCleanCut(cf_name_, vstorage_,
                                                     &start_level_inputs_) ||
         compaction_picker_->FilesRangeOverlapWithCompaction(
@@ -495,6 +535,7 @@ bool LevelCompactionBuilder::PickFileToCompact() {
       // A locked (pending compaction) input-level file was pulled in due to
       // user-key overlap.
       start_level_inputs_.clear();
+      output_size_ = 0;
       continue;
     }
 
@@ -510,10 +551,15 @@ bool LevelCompactionBuilder::PickFileToCompact() {
     output_level_inputs.level = output_level_;
     vstorage_->GetOverlappingInputs(output_level_, &smallest, &largest,
                                     &output_level_inputs.files);
+    for(auto& of:output_level_inputs.files){
+      output_size_ = 0;
+      output_size_+=of->compensated_file_size;
+    }
     if (!output_level_inputs.empty() &&
         !compaction_picker_->ExpandInputsToCleanCut(cf_name_, vstorage_,
                                                     &output_level_inputs)) {
       start_level_inputs_.clear();
+      output_size_ = 0;
       continue;
     }
     base_index_ = index;

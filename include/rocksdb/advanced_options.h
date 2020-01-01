@@ -484,6 +484,8 @@ struct AdvancedColumnFamilyOptions {
   bool level_compaction_dynamic_level_bytes = false;
 
   int base_level_for_dynamic_level_bytes = -1;
+  bool intra_compact_small_l0 = false;
+
 
   // Default: 10.
   //
