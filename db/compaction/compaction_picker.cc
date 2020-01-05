@@ -10,6 +10,7 @@
 #include "db/compaction/compaction_picker.h"
 
 #include <cinttypes>
+#include <iostream>
 #include <limits>
 #include <queue>
 #include <string>
@@ -39,32 +40,45 @@ bool FindIntraL0Compaction(const std::vector<FileMetaData*>& level_files,
                            size_t min_files_to_compact,
                            uint64_t max_compact_bytes_per_del_file,
                            uint64_t max_compaction_bytes,
-                           CompactionInputFiles* comp_inputs) {
-  size_t compact_bytes = static_cast<size_t>(level_files[0]->fd.file_size);
-  uint64_t compensated_compact_bytes = level_files[0]->compensated_file_size;
-  size_t compact_bytes_per_del_file = port::kMaxSizet;
+                           CompactionInputFiles* comp_inputs, bool small_l0) {
+  size_t start = 0;
+  size_t compact_bytes_per_del_file = 0;
   // Compaction range will be [0, span_len).
-  size_t span_len;
+  size_t span_len = start+1;
   // Pull in files until the amount of compaction work per deleted file begins
   // increasing or maximum total compaction size is reached.
   size_t new_compact_bytes_per_del_file = 0;
-  for (span_len = 1; span_len < level_files.size(); ++span_len) {
+  while(start<level_files.size()){
+  compact_bytes_per_del_file = 1<<30;
+  uint64_t compensated_compact_bytes = level_files[start]->compensated_file_size;
+  size_t compact_bytes = static_cast<size_t>(level_files[start]->fd.file_size);
+  for (span_len = start+1; span_len < level_files.size(); ++span_len) {
     compact_bytes += static_cast<size_t>(level_files[span_len]->fd.file_size);
     compensated_compact_bytes += level_files[span_len]->compensated_file_size;
     new_compact_bytes_per_del_file = compact_bytes / span_len;
+    size_t max_per_file = small_l0?1.2*compact_bytes_per_del_file:compact_bytes_per_del_file;
+    // std::cerr<<"new_per_file "<<new_compact_bytes_per_del_file<<"max per file"<<max_per_file<<std::endl;
     if (level_files[span_len]->being_compacted ||
-        new_compact_bytes_per_del_file > compact_bytes_per_del_file ||
+        new_compact_bytes_per_del_file > max_per_file ||
         compensated_compact_bytes > max_compaction_bytes) {
+      // std::cerr<<"break"<<std::endl;
       break;
     }
     compact_bytes_per_del_file = new_compact_bytes_per_del_file;
   }
+  if(small_l0&&span_len-start<min_files_to_compact&&level_files.size()-span_len>min_files_to_compact){
+    start = span_len;
+  } else {
+    break;
+  }
+  }
+  // std::cerr<<"span "<<start<<" "<<span_len<<"\n";
 
-  if (span_len >= min_files_to_compact &&
+  if (span_len-start >= min_files_to_compact &&
       compact_bytes_per_del_file < max_compact_bytes_per_del_file) {
     assert(comp_inputs != nullptr);
     comp_inputs->level = 0;
-    for (size_t i = 0; i < span_len; ++i) {
+    for (size_t i = start; i < span_len; ++i) {
       comp_inputs->files.push_back(level_files[i]);
     }
     return true;
@@ -231,6 +245,7 @@ bool CompactionPicker::ExpandInputsToCleanCut(const std::string& /*cf_name*/,
   if (level == 0) {
     return true;
   }
+
 
   InternalKey smallest, largest;
 
