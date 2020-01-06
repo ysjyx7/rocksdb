@@ -267,7 +267,7 @@ void LevelCompactionBuilder::SetupInitialFiles() {
           // of write stalls, we can attempt compacting a span of files within
           // L0.
           // MARK:wujiayu
-          if (!ioptions_.intra_compact_small_l0&&PickIntraL0Compaction()) {
+          if (/*!ioptions_.intra_compact_small_l0&&*/false&&PickIntraL0Compaction()) {
             output_level_ = 0;
             compaction_reason_ = CompactionReason::kLevelL0FilesNum;
             break;
