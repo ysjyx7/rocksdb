@@ -234,7 +234,7 @@ void LevelCompactionBuilder::SetupInitialFiles() {
                 output_level_inputs_.clear();
                 skipped_l0_to_base = true;
                 compaction_reason_ = CompactionReason::kLevelL0FilesNum;
-                // std::cerr<<"compact size:";
+                std::cerr<<"compact size:";
                 // for(auto& f:start_level_inputs_.files){
                   // std::cerr<<f->compensated_file_size<<" ";
                 // }
@@ -244,7 +244,7 @@ void LevelCompactionBuilder::SetupInitialFiles() {
               }
               // std::cerr<<"pick false"<<"\n";
               start_level_inputs_ = std::move(tmp);
-              // continue;
+              continue;
             }
           }
           // L0 score = `num L0 files` / `level0_file_num_compaction_trigger`
@@ -267,7 +267,7 @@ void LevelCompactionBuilder::SetupInitialFiles() {
           // of write stalls, we can attempt compacting a span of files within
           // L0.
           // MARK:wujiayu
-          if (/*!ioptions_.intra_compact_small_l0&&*/false&&PickIntraL0Compaction()) {
+          if (/*!ioptions_.intra_compact_small_l0&&*/ioptions_.intra_compact_small_l0&&PickIntraL0Compaction(6)) {
             output_level_ = 0;
             compaction_reason_ = CompactionReason::kLevelL0FilesNum;
             break;
@@ -601,8 +601,8 @@ bool LevelCompactionBuilder::PickIntraL0Compaction(size_t num) {
     // }
     // std::cerr<<std::endl;
     return FindIntraL0Compaction(
-      lf, kMinFilesForIntraL0Compaction, port::kMaxUint64,
-      mutable_cf_options_.max_bytes_for_level_base, &start_level_inputs_, true);
+      lf, 2, port::kMaxUint64,
+      mutable_cf_options_.write_buffer_size, &start_level_inputs_, true);
   }
 }
 }  // namespace

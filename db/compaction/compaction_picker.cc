@@ -56,7 +56,7 @@ bool FindIntraL0Compaction(const std::vector<FileMetaData*>& level_files,
     compact_bytes += static_cast<size_t>(level_files[span_len]->fd.file_size);
     compensated_compact_bytes += level_files[span_len]->compensated_file_size;
     new_compact_bytes_per_del_file = compact_bytes / span_len;
-    size_t max_per_file = small_l0?1.2*compact_bytes_per_del_file:compact_bytes_per_del_file;
+    size_t max_per_file = small_l0?1.5*compact_bytes_per_del_file:compact_bytes_per_del_file;
     // std::cerr<<"new_per_file "<<new_compact_bytes_per_del_file<<"max per file"<<max_per_file<<std::endl;
     if (level_files[span_len]->being_compacted ||
         new_compact_bytes_per_del_file > max_per_file ||
@@ -72,7 +72,7 @@ bool FindIntraL0Compaction(const std::vector<FileMetaData*>& level_files,
     break;
   }
   }
-  // std::cerr<<"span "<<start<<" "<<span_len<<"\n";
+  std::cerr<<"span "<<start<<" "<<span_len<<"\n";
 
   if (span_len-start >= min_files_to_compact &&
       compact_bytes_per_del_file < max_compact_bytes_per_del_file) {
