@@ -234,7 +234,7 @@ void LevelCompactionBuilder::SetupInitialFiles() {
                 output_level_inputs_.clear();
                 skipped_l0_to_base = true;
                 compaction_reason_ = CompactionReason::kLevelL0FilesNum;
-                std::cerr<<"compact size:";
+                // std::cerr<<"compact size:";
                 // for(auto& f:start_level_inputs_.files){
                   // std::cerr<<f->compensated_file_size<<" ";
                 // }
