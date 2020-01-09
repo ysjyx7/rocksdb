@@ -210,6 +210,7 @@ void LevelCompactionBuilder::SetupInitialFiles() {
       }
       output_level_ =
           (start_level_ == 0) ? vstorage_->base_level() : start_level_ + 1;
+      // std::cerr<<"output_level "<<output_level_<<std::endl;
       if (PickFileToCompact()) {
         // found the compaction!
         if (start_level_ == 0) {
@@ -267,11 +268,14 @@ void LevelCompactionBuilder::SetupInitialFiles() {
           // of write stalls, we can attempt compacting a span of files within
           // L0.
           // MARK:wujiayu
-          if (/*!ioptions_.intra_compact_small_l0&&*false&&*/((!ioptions_.intra_compact_small_l0&&PickIntraL0Compaction()) || (ioptions_.intra_compact_small_l0&&PickIntraL0Compaction(6)))) {
+          // /*
+          if (((!ioptions_.intra_compact_small_l0&&PickIntraL0Compaction()) || (ioptions_.intra_compact_small_l0&&PickIntraL0Compaction(6)))) {
+            // std::cerr<<"block intro"<<std::endl;
             output_level_ = 0;
             compaction_reason_ = CompactionReason::kLevelL0FilesNum;
             break;
           }
+          // */
         }
       }
     }
@@ -280,6 +284,7 @@ void LevelCompactionBuilder::SetupInitialFiles() {
   // if we didn't find a compaction, check if there are any files marked for
   // compaction
   if (start_level_inputs_.empty()) {
+    // std::cerr<<"empty input\n";
     parent_index_ = base_index_ = -1;
 
     compaction_picker_->PickFilesMarkedForCompaction(
@@ -388,6 +393,7 @@ Compaction* LevelCompactionBuilder::PickCompaction() {
     return nullptr;
   }
   assert(start_level_ >= 0 && output_level_ >= 0);
+  // std::cerr<<"output level after pick"<<std::endl;
 
   // If it is a L0 -> base level compaction, we need to set up other L0
   // files if needed.
@@ -410,6 +416,7 @@ Compaction* LevelCompactionBuilder::PickCompaction() {
 }
 
 Compaction* LevelCompactionBuilder::GetCompaction() {
+  // std::cerr<<"new compaction level "<<output_level_<<" "<<compaction_inputs_[0].level<<"\n";
   auto c = new Compaction(
       vstorage_, ioptions_, mutable_cf_options_, std::move(compaction_inputs_),
       output_level_,
@@ -601,7 +608,7 @@ bool LevelCompactionBuilder::PickIntraL0Compaction(size_t num) {
     // }
     // std::cerr<<std::endl;
     return FindIntraL0Compaction(
-      lf, 2, port::kMaxUint64,
+      lf, 3, port::kMaxUint64,
       mutable_cf_options_.write_buffer_size, &start_level_inputs_, true);
   }
 }
