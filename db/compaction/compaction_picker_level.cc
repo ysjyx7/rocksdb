@@ -269,7 +269,7 @@ void LevelCompactionBuilder::SetupInitialFiles() {
           // L0.
           // MARK:wujiayu
           // /*
-          if (((!ioptions_.intra_compact_small_l0&&PickIntraL0Compaction()) || (ioptions_.intra_compact_small_l0&&PickIntraL0Compaction(6)))) {
+          if ((!ioptions_.intra_compact_small_l0&&PickIntraL0Compaction()) || (ioptions_.intra_compact_small_l0&&PickIntraL0Compaction(6))) {
             // std::cerr<<"block intro"<<std::endl;
             output_level_ = 0;
             compaction_reason_ = CompactionReason::kLevelL0FilesNum;
@@ -598,17 +598,19 @@ bool LevelCompactionBuilder::PickIntraL0Compaction(size_t num) {
       level_files, kMinFilesForIntraL0Compaction, port::kMaxUint64,
       mutable_cf_options_.max_compaction_bytes, &start_level_inputs_);
   } else {
-    auto lf = vstorage_->LevelFiles(0 /* level */);
+    /*
+    auto lf = vstorage_->LevelFiles(0);
     std::sort(lf.begin(), lf.end(), [](const FileMetaData* f1, const FileMetaData* f2){
       return f1->fd.file_size < f2->fd.file_size;
     });
+    */
     // std::cerr<<"l0 files: ";
     // for(auto& f:lf){
       // std::cerr<<f->fd.file_size<<" ";
     // }
     // std::cerr<<std::endl;
     return FindIntraL0Compaction(
-      lf, 3, port::kMaxUint64,
+      level_files, 3, port::kMaxUint64,
       mutable_cf_options_.write_buffer_size, &start_level_inputs_, true);
   }
 }
