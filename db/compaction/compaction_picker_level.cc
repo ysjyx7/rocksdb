@@ -223,7 +223,7 @@ void LevelCompactionBuilder::SetupInitialFiles() {
               input_size_ += f->fd.file_size;
             }
             // std::cerr<<"size "<<input_size_<<"and "<<output_size_<<"\n";
-            if(output_size_/input_size_>10){
+            if(output_size_/input_size_>6){
               // intra compaction
               auto tmp = std::move(start_level_inputs_);
               start_level_inputs_.clear();
@@ -267,7 +267,7 @@ void LevelCompactionBuilder::SetupInitialFiles() {
           // of write stalls, we can attempt compacting a span of files within
           // L0.
           // MARK:wujiayu
-          if (/*!ioptions_.intra_compact_small_l0&&*false&&*/((!ioptions_.intra_compact_small_l0&&PickIntraL0Compaction()) || (ioptions_.intra_compact_small_l0&&PickIntraL0Compaction(6)))) {
+          if (/*!ioptions_.intra_compact_small_l0&&*false&&*/((!ioptions_.intra_compact_small_l0&&PickIntraL0Compaction()) || (ioptions_.intra_compact_small_l0&&PickIntraL0Compaction(4)))) {
             output_level_ = 0;
             compaction_reason_ = CompactionReason::kLevelL0FilesNum;
             break;
@@ -577,10 +577,10 @@ bool LevelCompactionBuilder::PickIntraL0Compaction(size_t num) {
   start_level_inputs_.clear();
   const std::vector<FileMetaData*>& level_files =
       vstorage_->LevelFiles(0 /* level */);
-  num = num == 0?static_cast<size_t>(
+  size_t min_num = num == 0?static_cast<size_t>(
               mutable_cf_options_.level0_file_num_compaction_trigger + 2):num;
   if (level_files.size() <
-          num ||
+          min_num ||
       level_files[0]->being_compacted) {
     // If L0 isn't accumulating much files beyond the regular trigger, don't
     // resort to L0->L0 compaction yet.
@@ -601,7 +601,7 @@ bool LevelCompactionBuilder::PickIntraL0Compaction(size_t num) {
     // }
     // std::cerr<<std::endl;
     return FindIntraL0Compaction(
-      lf, 2, port::kMaxUint64,
+      lf, num, port::kMaxUint64,
       mutable_cf_options_.write_buffer_size, &start_level_inputs_, true);
   }
 }
