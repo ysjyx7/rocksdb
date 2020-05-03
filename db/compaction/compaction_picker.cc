@@ -43,7 +43,7 @@ bool FindIntraL0Compaction(const std::vector<FileMetaData*>& level_files,
                            CompactionInputFiles* comp_inputs, bool small_l0) {
   size_t start = 0;
   size_t compact_bytes_per_del_file = 0;
-  // Compaction range will be [0, span_len).
+  // Compaction range will be [start, span_len).
   size_t span_len = start+1;
   // Pull in files until the amount of compaction work per deleted file begins
   // increasing or maximum total compaction size is reached.

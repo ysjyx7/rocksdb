@@ -608,7 +608,7 @@ bool LevelCompactionBuilder::PickIntraL0Compaction(size_t num) {
     // }
     // std::cerr<<std::endl;
     return FindIntraL0Compaction(
-      lf, num, port::kMaxUint64,
+      level_files, num, port::kMaxUint64,
       mutable_cf_options_.write_buffer_size, &start_level_inputs_, true);
   }
 }
