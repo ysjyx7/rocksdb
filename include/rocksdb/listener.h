@@ -329,6 +329,10 @@ class EventListener {
   // returns.  Otherwise, RocksDB may be blocked.
   virtual void OnCompactionBegin(DB* /*db*/, const CompactionJobInfo& /*ci*/) {}
 
+  virtual void NotifyWriteStall(){}
+
+  virtual void NotifyWriteStallComplete(){}
+
   // A callback function for RocksDB which will be called whenever
   // a registered RocksDB compacts a file. The default implementation
   // is a no-op.

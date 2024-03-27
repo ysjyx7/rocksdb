@@ -21,6 +21,7 @@
 #include "test_util/sync_point.h"
 #include "util/concurrent_task_limiter_impl.h"
 
+
 namespace rocksdb {
 
 bool DBImpl::EnoughRoomForCompaction(
@@ -585,6 +586,11 @@ void DBImpl::NotifyOnFlushBegin(ColumnFamilyData* cfd, FileMetaData* file_meta,
     info.flush_reason = cfd->GetFlushReason();
     for (auto listener : immutable_db_options_.listeners) {
       listener->OnFlushBegin(this, info);
+      if(triggered_writes_slowdown||triggered_writes_stop){
+        listener->NotifyWriteStall();
+      }else{
+        listener->NotifyWriteStallComplete();
+      }
     }
   }
   mutex_.Lock();
@@ -624,6 +630,11 @@ void DBImpl::NotifyOnFlushCompleted(
       info->triggered_writes_stop = triggered_writes_stop;
       for (auto listener : immutable_db_options_.listeners) {
         listener->OnFlushCompleted(this, *info);
+        if(triggered_writes_slowdown||triggered_writes_stop){
+          listener->NotifyWriteStall();
+        }else{
+          listener->NotifyWriteStallComplete();
+        }
       }
     }
     flush_jobs_info->clear();
